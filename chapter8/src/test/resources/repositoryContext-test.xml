@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	   xmlns:ldap="http://www.springframework.org/schema/ldap"
+	   xmlns:context="http://www.springframework.org/schema/context"
+	   xsi:schemaLocation="http://www.springframework.org/schema/beans
+                           https://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/ldap https://www.springframework.org/schema/ldap/spring-ldap.xsd
+						   http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+
+	<context:component-scan base-package="com.apress.book.ldap" />
+
+	<bean id="placeholderConfig" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+		<property name="location" value="classpath:ldap.properties" />
+	</bean>
+
+	<ldap:context-source id="contextSource"
+						 password="${ldap.password}"
+						 url="${ldap.url}"
+						 username="${ldap.userDn}"/>
+
+	<!-- Populates the LDAP server with initial data -->
+	<bean class="org.springframework.ldap.test.LdifPopulator" depends-on="embeddedLdapServer">
+		<property name="contextSource" ref="contextSource" />
+		<property name="resource" value="classpath:patrons.ldif" />
+		<property name="base" value="${ldap.base}" />
+		<property name="clean" value="${ldap.clean}" />
+		<property name="defaultBase" value="${ldap.base}" />
+	</bean>
+
+	<bean id="embeddedLdapServer" class="org.springframework.ldap.test.unboundid.EmbeddedLdapServerFactoryBean">
+		<property name="partitionName" value="inflinx"/>
+		<property name="partitionSuffix" value="${ldap.base}" />
+		<property name="port" value="${ldap.port}" />
+	</bean>
+
+	<bean id="ldapTemplate" class="org.springframework.ldap.core.LdapTemplate">
+		<constructor-arg ref="contextSource" />
+	</bean>
+
+</beans>
